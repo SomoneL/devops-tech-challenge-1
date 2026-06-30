@@ -3,8 +3,8 @@ pipeline {
 
     environment {
         AWS_REGION = 'us-east-1'
-        FRONTEND_REPO = 318630425437.dkr.ecr.us-east-1.amazonaws.com/devops-challenge-frontend
-        BACKEND_REPO  = 318630425437.dkr.ecr.us-east-1.amazonaws.com/devops-challenge-backend
+        FRONTEND_REPO = '318630425437.dkr.ecr.us-east-1.amazonaws.com/devops-challenge-frontend'
+        BACKEND_REPO  = '318630425437.dkr.ecr.us-east-1.amazonaws.com/devops-challenge-backend'
     }
 
     stages {
