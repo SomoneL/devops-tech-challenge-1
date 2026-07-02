@@ -1,59 +1,193 @@
-# Overview
-This repository contains a React frontend, and an Express backend that the frontend connects to.
+---
 
-# Objective
-Deploy the frontend and backend to somewhere publicly accessible over the internet. The AWS Free Tier should be more than sufficient to run this project, but you may use any platform and tooling you'd like for your solution.
+## Infrastructure Components
 
-Fork this repo as a base. You may change any code in this repository to suit the infrastructure you build in this code challenge.
+All application infrastructure is provisioned via Terraform in us-east-1:
 
-# Submission
-1. A github repo that has been forked from this repo with all your code.
-2. Modify this README file with instructions for:
-* Any tools needed to deploy your infrastructure
-* All the steps needed to repeat your deployment process
-* URLs to the your deployed frontend.
+- **VPC** with public and private subnets across 2 availability zones
+- **Internet Gateway** for public subnet internet access
+- **NAT Gateway** for private subnet outbound-only internet access
+- **ECS Cluster** running on Fargate (no EC2 management required)
+- **ECR Repositories** for frontend and backend Docker images
+- **Application Load Balancer** with path-based routing rules
+- **Auto Scaling** — target tracking at 50% CPU, min 1 task, max 4 tasks
+- **CloudWatch Log Groups** for container log retention
+- **IAM Roles** — separate execution role (infrastructure) and task role (app)
+- **Security Groups** — ALB open to internet, ECS tasks only reachable via ALB
 
-# Evaluation
-You will be evaluated on the ease to replicate your infrastructure. This is a combination of quality of the instructions, as well as any scripts to automate the overall setup process.
+### Jenkins Infrastructure (manually provisioned, not Terraform-managed)
 
-# Setup your environment
-Install nodejs. Binaries and installers can be found on nodejs.org.
-https://nodejs.org/en/download/
+Per challenge requirements, Jenkins infrastructure was set up manually:
 
-For macOS or Linux, Nodejs can usually be found in your preferred package manager.
-https://nodejs.org/en/download/package-manager/
+- **EC2 Instance** — t3.small, Amazon Linux 2023, public subnet, us-east-1
+- **Elastic IP** — static public IP for consistent Jenkins access
+- **Security Group** — ports 22 (SSH), 80, 443, 8080 (Jenkins UI) open
+- **Jenkins** — runs as a Docker container with Docker-in-Docker via socket
+  mount, persisted via /var/jenkins_home volume mount
+- **IAM credentials** — stored in Jenkins encrypted credential store,
+  referenced by ID in Jenkinsfile, never hardcoded
 
-Depending on the Linux distribution, the Node Package Manager `npm` may need to be installed separately.
+---
 
-# Running the project
-The backend and the frontend will need to run on separate processes. The backend should be started first.
+## Prerequisites
+
+- Node.js v16 (use nvm: `nvm install 16 && nvm use 16`)
+- Docker Desktop
+- AWS CLI configured with appropriate IAM permissions
+- Terraform >= 1.0
+- Git
+
+---
+
+## Local Setup and Running
+
+### 1. Clone the repository
+
+```bash
+git clone https://github.com/SomoneL/devops-tech-challenge-1.git
+cd devops-tech-challenge-1
 ```
+
+### 2. Run the backend locally
+
+```bash
 cd backend
+nvm use 16
 npm ci
 npm start
 ```
-The backend should response to a GET request on `localhost:8080`.
+Verify: `http://localhost:8080` returns a JSON GUID.
 
-With the backend started, the frontend can be started.
-```
+### 3. Run the frontend locally
+
+In a new terminal tab (keep backend running):
+```bash
 cd frontend
+nvm use 16
 npm ci
 npm start
 ```
-The frontend can be accessed at `localhost:3000`. If the frontend successfully connects to the backend, a message saying "SUCCESS" followed by a guid should be displayed on the screen.  If the connection failed, an error message will be displayed on the screen.
+Verify: `http://localhost:3000` displays a GUID — confirming
+frontend-to-backend communication works.
 
-# Configuration
-The frontend has a configuration file at `frontend/src/config.js` that defines the URL to call the backend. This URL is used on `frontend/src/App.js#12`, where the front end will make the GET call during the initial load of the page.
+**Note:** `frontend/src/config.js` must point to `http://localhost:8080/`
+for local development. For production, it points to the ALB DNS name.
 
-The backend has a configuration file at `backend/config.js` that defines the host that the frontend will be calling from. This URL is used in the `Access-Control-Allow-Origin` CORS header, read in `backend/index.js#14`
+---
 
-# Optional Extras
-The core requirement for this challenge is to get the provided application up and running for consumption over the public internet. That being said, there are some opportunities in this code challenge to demonstrate your skill sets that are above and beyond the core requirement.
+## Terraform Deployment
 
-A few examples of extras for this coding challenge:
-1. Dockerizing the application
-2. Scripts to set up the infrastructure
-3. Providing a pipeline for the application deployment
-4. Running the application in a serverless environment
+```bash
+cd terraform
+terraform init
+terraform plan
+terraform apply
+```
 
-This is not an exhaustive list of extra features that could be added to this code challenge. At the end of the day, this section is for you to demonstrate any skills you want to show that’s not captured in the core requirement.
+**Important notes:**
+- Requires `mysql-keypair` key pair to exist in us-east-1
+- Region is set to us-east-1 in variables.tf
+- Do not commit `.terraform/`, `terraform.tfstate`, or `*.tfvars`
+- After apply, note the outputs — you will need `alb_dns_name`,
+  `frontend_repository_url`, `backend_repository_url`, and
+  `jenkins_master_public_ip` for subsequent steps
+
+---
+
+## Jenkins Setup
+
+1. SSH into the Jenkins EC2 instance:
+
+ssh -i '/Users/somoneletman/Documents/ALL Cloud Engineering /Action Steps/Week 3/mysql-keypair.pem' ec2-user@23.20.157.205`
+
+2. Jenkins runs as a Docker container — access the UI at:
+http://23.20.157.205:8080
+
+3. Credentials configured in Jenkins:
+   - **github-PAT** — GitHub username + Personal Access Token
+   - **aws-credentials** — IAM Access Key ID + Secret Access Key
+
+4. Plugins installed: Docker, Amazon EC2, Amazon ECS/Fargate
+
+---
+
+## CI/CD Pipeline
+
+The `Jenkinsfile` at the project root defines a 5-stage pipeline:
+
+1. **Checkout code** — pulls latest from GitHub via SCM
+2. **Build Docker images** — builds frontend and backend images
+3. **Authenticate to ECR** — generates temporary ECR login token
+4. **Tag and Push to ECR** — pushes both images tagged `latest`
+5. **Update ECS services** — triggers force-new-deployment on both services
+
+Pipeline triggers automatically via GitHub webhook on every push to `main`.
+
+**Webhook URL:** http://23.20.157.205:8080/github-webhook/
+
+---
+
+## Configuration
+
+### frontend/src/config.js
+- Local development: `http://localhost:8080/`
+- Production: `devops-challenge-alb-1218229428.us-east-1.elb.amazonaws.com`
+
+### backend/config.js
+- Local development: `CORS_ORIGIN: 'http://localhost:3000'`
+- Production: `CORS_ORIGIN: devops-challenge-alb-1218229428.us-east-1.elb.amazonaws.com
+
+**Important:** After updating config files, Docker images must be rebuilt
+with `--no-cache` to prevent stale cached layers from baking in old values.
+
+---
+
+## Troubleshooting
+
+| Issue | Root Cause | Fix |
+|---|---|---|
+| `npm ci` fails | Node version too new | Run `nvm use 16` first |
+| Frontend Docker build fails (`ERR_OSSL_EVP_UNSUPPORTED`) | Node 18 incompatible with webpack | Use `node:16` in frontend Dockerfile |
+| "Failed to fetch" in browser | `host.docker.internal` used in config | Use `localhost` — React runs in browser, not container |
+| Docker build uses old config | Build cache stale | Always use `docker build --no-cache` after config edits |
+| ALB returns frontend HTML on `/api` | Path pattern `/api/*` doesn't match `/api` exactly | Change rule to `/api*` |
+| Terraform subnet deletion stuck | ALB still attached to subnet | Manually delete ALB first, then retry |
+| Terraform cross-region VPC error | State file tracking wrong region | Run `terraform destroy` in original region, wipe state, rebuild |
+
+---
+
+## Load Testing Results
+
+**Tool:** Siege (`siege -c 250 -t 5M`)
+**Target:** `http://<alb-dns-name>`
+
+| Metric | Result |
+|---|---|
+| Total transactions | 48,111 hits |
+| Availability | 99.96% |
+| Transaction rate | 160.19 trans/sec |
+| Failed transactions | 21 |
+| Avg response time | 1,556ms |
+| Peak CPU (frontend) | ~99.9% |
+
+### Auto Scaling Behavior
+
+- **Scale-out:** Frontend scaled from 1 → 4 tasks (maximum) within ~3
+  minutes of load test start
+- **Trigger:** CPU exceeded 50% threshold (peaked at ~99.9%)
+- **First scale event:** 11:59:17 (1 → 2 tasks)
+- **Maximum reached:** 12:01:47 (4 tasks)
+- **Scale-in:** Began ~15 minutes after load dropped (12:17:49),
+  ECS gracefully drained connections before deregistering tasks
+- **Backend:** Remained at 1 task — insufficient direct `/api` traffic
+  to trigger its own scaling policy
+
+---
+
+## Submission
+
+- **Jenkins URL:** `http://23.20.157.205:8080`
+- **Jenkins credentials:** (provided separately in submission form)
+- **Frontend URL:** `http://devops-challenge-alb-1218229428.us-east-1.elb.amazonaws.com`
+- **GitHub repo:** `https://github.com/SomoneL/devops-tech-challenge-1`
+  (private, shared with michaeltayo96@outlook.com)
