@@ -31,7 +31,7 @@ Per challenge requirements, Jenkins infrastructure was set up manually:
 
 ## Prerequisites
 
-- Node.js v16 (use nvm: `nvm install 16 && nvm use 16`)
+- Node.js v16 (use nvm: nvm install 16 && nvm use 16)
 - Docker Desktop
 - AWS CLI configured with appropriate IAM permissions
 - Terraform >= 1.0
@@ -43,54 +43,50 @@ Per challenge requirements, Jenkins infrastructure was set up manually:
 
 ### 1. Clone the repository
 
-```bash
+
 git clone https://github.com/SomoneL/devops-tech-challenge-1.git
 cd devops-tech-challenge-1
-```
 
 ### 2. Run the backend locally
 
-```bash
 cd backend
 nvm use 16
 npm ci
 npm start
-```
-Verify: `http://localhost:8080` returns a JSON GUID.
+
+Verify: 'http://localhost:8080' returns a JSON GUID.
 
 ### 3. Run the frontend locally
 
 In a new terminal tab (keep backend running):
-```bash
+
 cd frontend
 nvm use 16
 npm ci
 npm start
-```
-Verify: `http://localhost:3000` displays a GUID — confirming
+
+Verify: 'http://localhost:3000' displays a GUID — confirming
 frontend-to-backend communication works.
 
-**Note:** `frontend/src/config.js` must point to `http://localhost:8080/`
+**Note:** 'frontend/src/config.js' must point to 'http://localhost:8080/'
 for local development. For production, it points to the ALB DNS name.
 
 ---
 
 ## Terraform Deployment
 
-```bash
 cd terraform
 terraform init
 terraform plan
 terraform apply
-```
 
 **Important notes:**
-- Requires `mysql-keypair` key pair to exist in us-east-1
+- Requires 'mysql-keypair' key pair to exist in us-east-1
 - Region is set to us-east-1 in variables.tf
-- Do not commit `.terraform/`, `terraform.tfstate`, or `*.tfvars`
-- After apply, note the outputs — you will need `alb_dns_name`,
-  `frontend_repository_url`, `backend_repository_url`, and
-  `jenkins_master_public_ip` for subsequent steps
+- Do not commit '.terraform/', 'terraform.tfstate', or '*.tfvars
+- After apply, note the outputs — you will need 'alb_dns_name',
+  'frontend_repository_url', 'backend_repository_url', and
+  'jenkins_master_public_ip' for subsequent steps
 
 ---
 
@@ -98,7 +94,7 @@ terraform apply
 
 1. SSH into the Jenkins EC2 instance:
 
-ssh -i '/Users/somoneletman/Documents/ALL Cloud Engineering /Action Steps/Week 3/mysql-keypair.pem' ec2-user@23.20.157.205`
+ssh -i '/Users/somoneletman/Documents/ALL Cloud Engineering /Action Steps/Week 3/mysql-keypair.pem' ec2-user@23.20.157.205'
 
 2. Jenkins runs as a Docker container — access the UI at:
 http://23.20.157.205:8080
@@ -113,15 +109,15 @@ http://23.20.157.205:8080
 
 ## CI/CD Pipeline
 
-The `Jenkinsfile` at the project root defines a 5-stage pipeline:
+The 'Jenkinsfile' at the project root defines a 5-stage pipeline:
 
 1. **Checkout code** — pulls latest from GitHub via SCM
 2. **Build Docker images** — builds frontend and backend images
 3. **Authenticate to ECR** — generates temporary ECR login token
-4. **Tag and Push to ECR** — pushes both images tagged `latest`
+4. **Tag and Push to ECR** — pushes both images tagged 'latest'
 5. **Update ECS services** — triggers force-new-deployment on both services
 
-Pipeline triggers automatically via GitHub webhook on every push to `main`.
+Pipeline triggers automatically via GitHub webhook on every push to 'main'.
 
 **Webhook URL:** http://23.20.157.205:8080/github-webhook/
 
@@ -130,15 +126,15 @@ Pipeline triggers automatically via GitHub webhook on every push to `main`.
 ## Configuration
 
 ### frontend/src/config.js
-- Local development: `http://localhost:8080/`
-- Production: `devops-challenge-alb-1218229428.us-east-1.elb.amazonaws.com`
+- Local development: 'http://localhost:8080/'
+- Production: 'devops-challenge-alb-1218229428.us-east-1.elb.amazonaws.com'
 
 ### backend/config.js
-- Local development: `CORS_ORIGIN: 'http://localhost:3000'`
-- Production: `CORS_ORIGIN: devops-challenge-alb-1218229428.us-east-1.elb.amazonaws.com
+- Local development: 'CORS_ORIGIN: 'http://localhost:3000''
+- Production: 'CORS_ORIGIN: devops-challenge-alb-1218229428.us-east-1.elb.amazonaws.com
 
 **Important:** After updating config files, Docker images must be rebuilt
-with `--no-cache` to prevent stale cached layers from baking in old values.
+with '--no-cache' to prevent stale cached layers from baking in old values.
 
 ---
 
@@ -146,20 +142,20 @@ with `--no-cache` to prevent stale cached layers from baking in old values.
 
 | Issue | Root Cause | Fix |
 |---|---|---|
-| `npm ci` fails | Node version too new | Run `nvm use 16` first |
-| Frontend Docker build fails (`ERR_OSSL_EVP_UNSUPPORTED`) | Node 18 incompatible with webpack | Use `node:16` in frontend Dockerfile |
-| "Failed to fetch" in browser | `host.docker.internal` used in config | Use `localhost` — React runs in browser, not container |
-| Docker build uses old config | Build cache stale | Always use `docker build --no-cache` after config edits |
-| ALB returns frontend HTML on `/api` | Path pattern `/api/*` doesn't match `/api` exactly | Change rule to `/api*` |
+| 'npm ci' fails | Node version too new | Run 'nvm use 16' first |
+| Frontend Docker build fails ('ERR_OSSL_EVP_UNSUPPORTED') | Node 18 incompatible with webpack | Use 'node:16' in frontend Dockerfile |
+| "Failed to fetch" in browser | 'host.docker.internal' used in config | Use 'localhost' — React runs in browser, not container |
+| Docker build uses old config | Build cache stale | Always use 'docker build --no-cache' after config edits |
+| ALB returns frontend HTML on '/api' | Path pattern '/api/*' doesn't match '/api' exactly | Change rule to '/api*' |
 | Terraform subnet deletion stuck | ALB still attached to subnet | Manually delete ALB first, then retry |
-| Terraform cross-region VPC error | State file tracking wrong region | Run `terraform destroy` in original region, wipe state, rebuild |
+| Terraform cross-region VPC error | State file tracking wrong region | Run 'terraform destroy' in original region, wipe state, rebuild |
 
 ---
 
 ## Load Testing Results
 
-**Tool:** Siege (`siege -c 250 -t 5M`)
-**Target:** `http://<alb-dns-name>`
+**Tool:** Siege ('siege -c 250 -t 5M')
+**Target:** 'http://<alb-dns-name>'
 
 | Metric | Result |
 |---|---|
@@ -179,15 +175,15 @@ with `--no-cache` to prevent stale cached layers from baking in old values.
 - **Maximum reached:** 12:01:47 (4 tasks)
 - **Scale-in:** Began ~15 minutes after load dropped (12:17:49),
   ECS gracefully drained connections before deregistering tasks
-- **Backend:** Remained at 1 task — insufficient direct `/api` traffic
+- **Backend:** Remained at 1 task — insufficient direct '/api' traffic
   to trigger its own scaling policy
 
 ---
 
 ## Submission
 
-- **Jenkins URL:** `http://23.20.157.205:8080`
+- **Jenkins URL:** 'http://23.20.157.205:8080'
 - **Jenkins credentials:** (provided separately in submission form)
-- **Frontend URL:** `http://devops-challenge-alb-1218229428.us-east-1.elb.amazonaws.com`
-- **GitHub repo:** `https://github.com/SomoneL/devops-tech-challenge-1`
+- **Frontend URL:** 'http://devops-challenge-alb-1218229428.us-east-1.elb.amazonaws.com'
+- **GitHub repo:** 'https://github.com/SomoneL/devops-tech-challenge-1'
   (private, shared with michaeltayo96@outlook.com)
