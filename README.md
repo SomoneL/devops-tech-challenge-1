@@ -155,7 +155,7 @@ with '--no-cache' to prevent stale cached layers from baking in old values.
 ## Load Testing Results
 
 **Tool:** Siege ('siege -c 250 -t 5M')
-**Target:** 'http://<alb-dns-name>'
+**Target:** 'http://devops-challenge-alb-1218229428.us-east-1.elb.amazonaws.com'
 
 | Metric | Result |
 |---|---|
