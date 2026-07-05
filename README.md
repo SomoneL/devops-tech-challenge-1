@@ -1,5 +1,3 @@
----
-
 ## Infrastructure Components
 
 All application infrastructure is provisioned via Terraform in us-east-1:
@@ -27,7 +25,6 @@ Per challenge requirements, Jenkins infrastructure was set up manually:
 - **IAM credentials** — stored in Jenkins encrypted credential store,
   referenced by ID in Jenkinsfile, never hardcoded
 
----
 
 ## Prerequisites
 
@@ -37,7 +34,6 @@ Per challenge requirements, Jenkins infrastructure was set up manually:
 - Terraform >= 1.0
 - Git
 
----
 
 ## Local Setup and Running
 
@@ -71,7 +67,6 @@ frontend-to-backend communication works.
 **Note:** 'frontend/src/config.js' must point to 'http://localhost:8080/'
 for local development. For production, it points to the ALB DNS name.
 
----
 
 ## Terraform Deployment
 
@@ -88,7 +83,6 @@ terraform apply
   'frontend_repository_url', 'backend_repository_url', and
   'jenkins_master_public_ip' for subsequent steps
 
----
 
 ## Jenkins Setup
 
@@ -105,7 +99,6 @@ http://23.20.157.205:8080
 
 4. Plugins installed: Docker, Amazon EC2, Amazon ECS/Fargate
 
----
 
 ## CI/CD Pipeline
 
@@ -121,7 +114,6 @@ Pipeline triggers automatically via GitHub webhook on every push to 'main'.
 
 **Webhook URL:** http://23.20.157.205:8080/github-webhook/
 
----
 
 ## Configuration
 
@@ -136,7 +128,6 @@ Pipeline triggers automatically via GitHub webhook on every push to 'main'.
 **Important:** After updating config files, Docker images must be rebuilt
 with '--no-cache' to prevent stale cached layers from baking in old values.
 
----
 
 ## Troubleshooting
 
@@ -150,7 +141,6 @@ with '--no-cache' to prevent stale cached layers from baking in old values.
 | Terraform subnet deletion stuck | ALB still attached to subnet | Manually delete ALB first, then retry |
 | Terraform cross-region VPC error | State file tracking wrong region | Run 'terraform destroy' in original region, wipe state, rebuild |
 
----
 
 ## Load Testing Results
 
@@ -178,7 +168,6 @@ with '--no-cache' to prevent stale cached layers from baking in old values.
 - **Backend:** Remained at 1 task — insufficient direct '/api' traffic
   to trigger its own scaling policy
 
----
 
 ## Submission
 
