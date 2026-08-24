@@ -175,4 +175,4 @@ with '--no-cache' to prevent stale cached layers from baking in old values.
 - **Jenkins credentials:** (provided separately in submission form)
 - **Frontend URL:** 'http://devops-challenge-alb-1218229428.us-east-1.elb.amazonaws.com'
 - **GitHub repo:** 'https://github.com/SomoneL/devops-tech-challenge-1'
-  (private, shared with michaeltayo96@outlook.com)
+  (private)
