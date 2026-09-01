@@ -1,0 +1,42 @@
+[                                                                                                                                        
+    {                                                                                                                                    
+        "Name": "devops-challenge-frontend-service",                                                                                     
+        "Running": 1,                                                                                                                    
+        "Desired": 1,                                                                                                                    
+        "Pending": 0                                                                                                                     
+    },                                                                                                                                   
+    {                                                                                                                                    
+        "Name": "devops-challenge-backend-service",                                                                                      
+        "Running": 1,                                                                                                                    
+        "Desired": 1,                                                                                                                    
+        "Pending": 0                                                                                                                     
+    }                                                                                                                                    
+]                                                                                                                                        
+                                                                                                                                         
+                                                                                                                                         
+                                                                                                                                         
+                                                                                                                                         
+                                                                                                                                         
+                                                                                                                                         
+                                                                                                                                         
+                                                                                                                                         
+                                                                                                                                         
+                                                                                                                                         
+                                                                                                                                         
+                                                                                                                                         
+                                                                                                                                         
+                                                                                                                                         
+                                                                                                                                         
+                                                                                                                                         
+                                                                                                                                         
+                                                                                                                                         
+                                                                                                                                         
+                                                                                                                                         
+                                                                                                                                         
+                                                                                                                                         
+                                                                                                                                         
+                                                                                                                                         
+                                                                                                                                         
+                                                                                                                                         
+                                                                                                                                         
+                                                                                                                                         
