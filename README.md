@@ -8,11 +8,12 @@ A React frontend and an Express backend, each containerized with Docker and depl
 
 The frontend is publicly reachable through an Application Load Balancer, which also routes `/api*` traffic to the backend target group. Both services scale from 1 to 4 tasks at 50% CPU utilization.
 
-<b>Frontend:</b> http://devops-challenge-alb-1218229428.us-east-1.elb.amazonaws.com
+<b>Frontend:</b> [http://devops-challenge-alb-1850196483.us-east-1.elb.amazonaws.com]
 
 <b>Jenkins:</b> http://JENKINS_ELASTIC_IP:8080
 
-<img src="IMGUR_URL_FRONTEND_SUCCESS" height="60%" width="60%" alt="Frontend showing SUCCESS and a GUID from the backend"/>
+<img width="635" height="119" alt="Screenshot 2026-09-01 at 9 19 57 PM" src="https://github.com/user-attachments/assets/81d642bd-56bd-4815-96ea-7b36b46fff87" />
+
 
 <br />
 
